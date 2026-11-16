@@ -444,7 +444,25 @@
   }
 
   // ---------- actions ----------
-  function punch(x, y) {
+  // "ting ting": two bright, short boxing-bell strikes
+  function tingTing() {
+    try {
+      const a = ac(), t0 = a.currentTime;
+      [0, .22].forEach((off) => {
+        const t = t0 + off;
+        [[1568, .35], [3920, .12], [6270, .06]].forEach(([f, v]) => {
+          const o = a.createOscillator(), g = a.createGain();
+          o.type = "sine"; o.frequency.value = f;
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(v, t + .004);
+          g.gain.exponentialRampToValueAtTime(.001, t + .6);
+          o.connect(g).connect(a.destination); o.start(t); o.stop(t + .62);
+        });
+      });
+    } catch {}
+  }
+
+  function punch(x, y, sound) {
     const k = dayKey();
     state.days[k] = (state.days[k] || 0) + 1;
     state.log.push(Date.now());
@@ -453,7 +471,7 @@
 
     const n = state.days[k];
     const ms = milestone(n);
-    if (ms) bell(); else thud();
+    if (sound) sound(); else if (ms) bell(); else thud();
     if (navigator.vibrate) navigator.vibrate(ms ? [60, 40, 60] : 35);
     fx(x, y);
     $("tagline").innerHTML = `${ms || pick(LINES)}<small>Perdón n.º ${n} de hoy</small>`;
@@ -479,7 +497,7 @@
   });
   $("punch").addEventListener("click", () => {
     const br = bag.getBoundingClientRect();
-    punch(br.left + br.width * (.3 + Math.random() * .4), br.top + br.height * (.45 + Math.random() * .25));
+    punch(br.left + br.width * (.3 + Math.random() * .4), br.top + br.height * (.45 + Math.random() * .25), tingTing);
   });
   $("undo").addEventListener("click", undo);
 
