@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Perdonómetro</title>
+<meta name="description" content="Bolsa de boxeo contadora de perdones innecesarios de Fede.">
+<meta name="theme-color" content="#120d0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Perdonómetro">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #120d0b;
+    --bg2: #1e1512;
+    --red: #c8102e;
+    --red-dark: #7a0a1c;
+    --gold: #f2c14e;
+    --cream: #f4ead5;
+    --muted: #a8968a;
+    --rope: #e8e2d4;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 45% at 50% 0%, rgba(255,214,140,.18), transparent 70%),
+      radial-gradient(ellipse at 50% 120%, #3a1a14 0%, var(--bg) 60%);
+    background-color: var(--bg);
+    color: var(--cream);
+    font-family: "Oswald", system-ui, sans-serif;
+    overflow: hidden;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .app {
+    height: 100dvh;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+  }
+
+  /* ---------- Header / poster ---------- */
+  header { text-align: center; }
+  .kicker {
+    font-size: 12px; letter-spacing: .35em; color: var(--gold);
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: "Anton", Impact, sans-serif;
+    font-weight: 400;
+    font-size: clamp(34px, 11vw, 52px);
+    line-height: .95;
+    margin: 2px 0 0;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: var(--cream);
+    text-shadow: 3px 3px 0 var(--red), 6px 6px 0 rgba(0,0,0,.5);
+  }
+  .vs {
+    margin-top: 6px; font-size: 13px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
+  }
+  .vs b { color: var(--cream); font-weight: 600; }
+
+  /* ---------- Scoreboard ---------- */
+  .board {
+    margin: 12px auto 0;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .cell {
+    background: linear-gradient(#1a1210, #0c0807);
+    border: 2px solid #3b2a22;
+    border-radius: 10px;
+    text-align: center;
+    padding: 6px 4px 8px;
+    box-shadow: inset 0 0 18px rgba(0,0,0,.7);
+  }
+  .cell .label { font-size: 10px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+  .cell .num {
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 26px; line-height: 1.1; color: var(--gold);
+    text-shadow: 0 0 10px rgba(242,193,78,.45);
+    font-variant-numeric: tabular-nums;
+  }
+  .cell.main { border-color: var(--red); }
+  .cell.main .num {
+    font-size: 48px; color: #ff3b4f;
+    text-shadow: 0 0 14px rgba(255,59,79,.6);
+  }
+  .cell.main .num.bump { animation: bump .25s ease-out; }
+  @keyframes bump { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+  /* ---------- Bag stage ---------- */
+  .stage {
+    flex: 1;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    min-height: 0;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .bag-wrap {
+    position: absolute; top: 0; left: 50%;
+    height: 100%;
+    width: min(62vw, 230px);
+    transform: translateX(-50%);
+    transform-origin: 50% 0;
+  }
+  .bag-wrap.hit-l { animation: swingL .9s cubic-bezier(.2,.7,.3,1); }
+  .bag-wrap.hit-r { animation: swingR .9s cubic-bezier(.2,.7,.3,1); }
+  @keyframes swingL {
+    0% { transform: translateX(-50%) rotate(0); }
+    15% { transform: translateX(-50%) rotate(-11deg); }
+    40% { transform: translateX(-50%) rotate(6deg); }
+    62% { transform: translateX(-50%) rotate(-3deg); }
+    82% { transform: translateX(-50%) rotate(1.2deg); }
+    100% { transform: translateX(-50%) rotate(0); }
+  }
+  @keyframes swingR {
+    0% { transform: translateX(-50%) rotate(0); }
+    15% { transform: translateX(-50%) rotate(11deg); }
+    40% { transform: translateX(-50%) rotate(-6deg); }
+    62% { transform: translateX(-50%) rotate(3deg); }
+    82% { transform: translateX(-50%) rotate(-1.2deg); }
+    100% { transform: translateX(-50%) rotate(0); }
+  }
+  .bag-wrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .bag-body.squash { animation: squash .18s ease-out; transform-origin: 50% 60%; transform-box: fill-box; }
+  @keyframes squash { 0% { transform: scale(.93, 1.04); } 100% { transform: scale(1,1); } }
+
+  .pow {
+    position: absolute;
+    pointer-events: none;
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 40px;
+    color: var(--gold);
+    -webkit-text-stroke: 2px #2b0a06;
+    text-shadow: 3px 3px 0 var(--red);
+    transform: translate(-50%, -50%) rotate(var(--r, -8deg)) scale(.4);
+    animation: pow .7s ease-out forwards;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  @keyframes pow {
+    0% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--r)) scale(.4); }
+    20% { opacity: 1; transform: translate(-50%,-50%) rotate(var(--r)) scale(1.15); }
+    70% { opacity: 1; transform: translate(-50%,-80%) rotate(var(--r)) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-120%) rotate(var(--r)) scale(.9); }
+  }
+  .spark {
+    position: absolute; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--gold); pointer-events: none; z-index: 4;
+    animation: spark .5s ease-out forwards;
+  }
+  @keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
+
+  .tagline {
+    text-align: center;
+    min-height: 2.6em;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    color: var(--cream);
+    margin: 4px 0 10px;
+    text-transform: uppercase;
+  }
+  .tagline small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: .15em; }
+
+  /* ---------- Controls ---------- */
+  .controls { display: flex; gap: 10px; }
+  button {
+    white-space: nowrap;
+    font-family: "Oswald", sans-serif;
+    font-size: 14px; letter-spacing: .15em; text-transform: uppercase;
+    border-radius: 10px; padding: 12px 10px;
+    flex: 1; cursor: pointer;
+    border: 2px solid #3b2a22;
+    background: #1a1210; color: var(--cream);
+  }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--red); border-color: var(--red-dark); color: #fff; font-weight: 600; flex: 2; }
+  button:disabled { opacity: .4; }
+
+  /* ---------- Sheet (stats / reset) ---------- */
+  dialog {
+    border: 2px solid var(--red);
+    background: var(--bg2);
+    color: var(--cream);
+    border-radius: 14px;
+    width: min(92vw, 420px);
+    padding: 18px 18px 14px;
+  }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
+  dialog h2 { font-family: "Anton", sans-serif; font-weight: 400; margin: 0 0 10px; letter-spacing: .04em; font-size: 26px; color: var(--gold); text-transform: uppercase; }
+  .hist { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin: 8px 0 4px; }
+  .hist .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .hist .bar { width: 100%; background: var(--red); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .hist .v { font-size: 12px; color: var(--gold); }
+  .hist .d { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-top: 3px; }
+  .rows { margin: 12px 0; font-size: 15px; }
+  .rows div { display: flex; justify-content: space-between; border-bottom: 1px dashed #3b2a22; padding: 6px 0; }
+  .rows b { color: var(--gold); font-family: "Anton", sans-serif; font-weight: 400; font-size: 18px; }
+  .dlg-actions { display: flex; gap: 10px; margin-top: 10px; }
+  .danger { border-color: var(--red); color: #ff6b7a; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bag-wrap.hit-l, .bag-wrap.hit-r, .pow, .spark, .cell.main .num.bump { animation-duration: .01s; }
+  }
+  @media (max-height: 640px) {
+    .cell.main .num { font-size: 38px; }
+    h1 { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="kicker">★ Campeonato de los perdones ★</div>
+    <h1>Perdonómetro</h1>
+    <div class="vs"><b>Fede</b> vs. sus perdones innecesarios</div>
+  </header>
+
+  <section class="board" aria-label="Marcador">
+    <div class="cell"><div class="label">Hoy</div><div class="num" id="today">0</div></div>
+    <div class="cell main"><div class="label">Total</div><div class="num" id="total">0</div></div>
+    <div class="cell"><div class="label">Récord</div><div class="num" id="best">0</div></div>
+  </section>
+
+  <section class="stage" id="stage" role="button" aria-label="Pegale a la bolsa para sumar un perdón">
+    <div class="bag-wrap" id="bag">
+      <svg viewBox="0 0 200 520" aria-hidden="true">
+        <defs>
+          <linearGradient id="leather" x1="0" x2="1">
+            <stop offset="0" stop-color="#5a0714"/>
+            <stop offset=".28" stop-color="#b50f2a"/>
+            <stop offset=".45" stop-color="#d9233f"/>
+            <stop offset=".7" stop-color="#9c0c22"/>
+            <stop offset="1" stop-color="#43050f"/>
+          </linearGradient>
+          <linearGradient id="band" x1="0" x2="1">
+            <stop offset="0" stop-color="#0d0d0d"/>
+            <stop offset=".4" stop-color="#3a3a3a"/>
+            <stop offset="1" stop-color="#0a0a0a"/>
+          </linearGradient>
+          <linearGradient id="metal" x1="0" x2="1">
+            <stop offset="0" stop-color="#6d6d6d"/>
+            <stop offset=".5" stop-color="#d8d8d8"/>
+            <stop offset="1" stop-color="#5b5b5b"/>
+          </linearGradient>
+        </defs>
+        <!-- chain -->
+        <g stroke="url(#metal)" stroke-width="4" fill="none">
+          <line x1="100" y1="-400" x2="100" y2="40"/>
+          <ellipse cx="100" cy="46" rx="9" ry="7"/>
+          <line x1="100" y1="52" x2="48" y2="128"/>
+          <line x1="100" y1="52" x2="152" y2="128"/>
+          <line x1="100" y1="52" x2="78" y2="124"/>
+          <line x1="100" y1="52" x2="122" y2="124"/>
+        </g>
+        <g class="bag-body" id="bagBody">
+          <!-- top cap -->
+          <path d="M40 140 Q40 118 100 116 Q160 118 160 140 Z" fill="url(#band)"/>
+          <!-- body -->
+          <path d="M40 140 L40 450 Q40 486 100 488 Q160 486 160 450 L160 140 Z" fill="url(#leather)"/>
+          <!-- seams -->
+          <g stroke="#2a0207" stroke-width="1.5" opacity=".55">
+            <line x1="68" y1="142" x2="68" y2="484"/>
+            <line x1="132" y1="142" x2="132" y2="484"/>
+          </g>
+          <!-- bands -->
+          <rect x="40" y="148" width="120" height="18" fill="url(#band)"/>
+          <rect x="40" y="418" width="120" height="18" fill="url(#band)"/>
+          <!-- label patch -->
+          <rect x="54" y="232" width="92" height="120" rx="8" fill="#f4ead5" stroke="#1b1b1b" stroke-width="3"/>
+          <text x="100" y="262" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="22" fill="#c8102e">PER</text>
+          <text x="100" y="288" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="22" fill="#c8102e">DÓN</text>
+          <line x1="66" y1="298" x2="134" y2="298" stroke="#1b1b1b" stroke-width="2"/>
+          <text x="100" y="322" text-anchor="middle" font-family="Oswald, sans-serif" font-size="13" letter-spacing="2" fill="#1b1b1b">FEDE</text>
+          <text x="100" y="340" text-anchor="middle" font-family="Oswald, sans-serif" font-size="9" letter-spacing="1.5" fill="#555">PESO PLUMA</text>
+          <!-- shine -->
+          <path d="M84 150 Q78 300 86 470" stroke="#fff" stroke-opacity=".13" stroke-width="10" fill="none" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <div class="tagline" id="tagline">Tocá la bolsa cada vez que Fede pida perdón sin motivo<small>Round 1 · Ding ding</small></div>
+
+  <div class="controls">
+    <button id="undo" disabled aria-label="Deshacer último golpe">↶ Anular</button>
+    <button class="primary" id="punch">🥊 ¡Perdón!</button>
+    <button id="statsBtn">Stats</button>
+  </div>
+</div>
+
+<dialog id="stats">
+  <h2>Tarjeta del combate</h2>
+  <div class="hist" id="hist"></div>
+  <div class="rows">
+    <div><span>Total histórico</span><b id="sTotal">0</b></div>
+    <div><span>Hoy</span><b id="sToday">0</b></div>
+    <div><span>Récord en un día</span><b id="sBest">0</b></div>
+    <div><span>Promedio diario (7 días)</span><b id="sAvg">0</b></div>
+    <div><span>Último perdón</span><b id="sLast">—</b></div>
+  </div>
+  <div class="dlg-actions">
+    <button class="danger" id="reset">Reiniciar todo</button>
+    <button id="closeStats">Cerrar</button>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  const KEY = "perdonometro.v1";
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- storage ----------
+  const blank = () => ({ days: {}, log: [] }); // days: {"YYYY-MM-DD": n}, log: timestamps (last 200)
+  let state;
+  try { state = JSON.parse(localStorage.getItem(KEY)) || blank(); } catch { state = blank(); }
+  if (!state.days) state = blank();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+  const dayKey = (d = new Date()) => {
+    const z = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+  };
+  const total = () => Object.values(state.days).reduce((a, b) => a + b, 0);
+  const today = () => state.days[dayKey()] || 0;
+  const best = () => Math.max(0, ...Object.values(state.days));
+
+  // ---------- phrases ----------
+  const POWS = ["¡POW!", "¡BAM!", "¡PUM!", "¡ZAS!", "¡CRACK!", "¡KO!", "¡WHAM!", "¡PAF!"];
+  const LINES = [
+    "¡No tenés que pedir perdón, Fede!",
+    "Otro perdón al saco",
+    "Perdón innecesario detectado",
+    "Esquivá el perdón, Fede",
+    "La guardia arriba, el perdón abajo",
+    "¿Perdón de qué, campeón?",
+    "Ese perdón no estaba en el reglamento",
+    "Directo al mentón del perdón",
+    "El árbitro dice: sin perdón",
+    "Uppercut al perdón",
+    "Jab, jab, perdón",
+    "Fede, no hiciste nada malo",
+  ];
+  const milestone = (n) => {
+    if (n === 1) return "Primer perdón del día. Suena la campana";
+    if (n === 5) return "5 perdones. Fede, respirá";
+    if (n === 10) return "10 perdones. Récord de cortesía";
+    if (n === 20) return "20. Esto ya es nocaut técnico";
+    if (n === 50) return "50 perdones. Tirá la toalla";
+    if (n % 25 === 0) return `${n} perdones. Leyenda del ring`;
+    return null;
+  };
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+  // ---------- render ----------
+  function render(bump) {
+    const t = total();
+    $("today").textContent = today();
+    $("total").textContent = t;
+    $("best").textContent = best();
+    $("undo").disabled = state.log.length === 0;
+    if (bump) {
+      const el = $("total");
+      el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+    }
+  }
+
+  // ---------- audio (Web Audio, no files) ----------
+  let ctx;
+  const ac = () => (ctx ||= new (window.AudioContext || window.webkitAudioContext)());
+  function thud() {
+    try {
+      const a = ac(), t = a.currentTime;
+      // low body
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + .18);
+      g.gain.setValueAtTime(.9, t); g.gain.exponentialRampToValueAtTime(.001, t + .25);
+      o.connect(g).connect(a.destination); o.start(t); o.stop(t + .26);
+      // leather slap (noise burst)
+      const len = a.sampleRate * .08, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      const n = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
+      n.buffer = buf; f.type = "lowpass"; f.frequency.value = 1800; ng.gain.value = .6;
+      n.connect(f).connect(ng).connect(a.destination); n.start(t);
+    } catch {}
+  }
+  function bell() {
+    try {
+      const a = ac(), t0 = a.currentTime;
+      [0, .28].forEach((off) => {
+        const t = t0 + off;
+        [1, 2.76, 5.4].forEach((m, i) => {
+          const o = a.createOscillator(), g = a.createGain();
+          o.type = "sine"; o.frequency.value = 880 * m;
+          g.gain.setValueAtTime(.25 / (i + 1), t); g.gain.exponentialRampToValueAtTime(.001, t + 1.2);
+          o.connect(g).connect(a.destination); o.start(t); o.stop(t + 1.25);
+        });
+      });
+    } catch {}
+  }
+
+  // ---------- effects ----------
+  const stage = $("stage"), bag = $("bag"), bagBody = $("bagBody");
+  function fx(x, y) {
+    const r = stage.getBoundingClientRect();
+    const px = x - r.left, py = y - r.top;
+    const p = document.createElement("div");
+    p.className = "pow"; p.textContent = pick(POWS);
+    p.style.left = px + "px"; p.style.top = py + "px";
+    p.style.setProperty("--r", (Math.random() * 24 - 12).toFixed(1) + "deg");
+    stage.appendChild(p); setTimeout(() => p.remove(), 750);
+    for (let i = 0; i < 8; i++) {
+      const s = document.createElement("div");
+      s.className = "spark";
+      const ang = Math.random() * Math.PI * 2, dist = 30 + Math.random() * 40;
+      s.style.left = px + "px"; s.style.top = py + "px";
+      s.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+      s.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+      stage.appendChild(s); setTimeout(() => s.remove(), 520);
+    }
+    const br = bag.getBoundingClientRect();
+    const fromLeft = x < br.left + br.width / 2;
+    bag.classList.remove("hit-l", "hit-r"); void bag.offsetWidth;
+    bag.classList.add(fromLeft ? "hit-r" : "hit-l");
+    bagBody.classList.remove("squash"); void bagBody.getBoundingClientRect(); bagBody.classList.add("squash");
+  }
+
+  // ---------- actions ----------
+  function punch(x, y) {
+    const k = dayKey();
+    state.days[k] = (state.days[k] || 0) + 1;
+    state.log.push(Date.now());
+    if (state.log.length > 200) state.log.shift();
+    save();
+
+    const n = state.days[k];
+    const ms = milestone(n);
+    if (ms) bell(); else thud();
+    if (navigator.vibrate) navigator.vibrate(ms ? [60, 40, 60] : 35);
+    fx(x, y);
+    $("tagline").innerHTML = `${ms || pick(LINES)}<small>Perdón n.º ${n} de hoy</small>`;
+    render(true);
+  }
+
+  function undo() {
+    const ts = state.log.pop();
+    if (ts == null) return;
+    const k = dayKey(new Date(ts));
+    if (state.days[k]) { state.days[k]--; if (!state.days[k]) delete state.days[k]; }
+    save(); render();
+    $("tagline").innerHTML = `Golpe anulado por el árbitro<small>Ese no contaba</small>`;
+  }
+
+  stage.addEventListener("pointerdown", (e) => {
+    // only count hits on/near the bag
+    const br = bag.getBoundingClientRect();
+    const pad = 30;
+    const bodyTop = br.top + br.height * .22;
+    if (e.clientX < br.left - pad || e.clientX > br.right + pad || e.clientY < bodyTop - pad) return;
+    punch(e.clientX, e.clientY);
+  });
+  $("punch").addEventListener("click", () => {
+    const br = bag.getBoundingClientRect();
+    punch(br.left + br.width * (.3 + Math.random() * .4), br.top + br.height * (.45 + Math.random() * .25));
+  });
+  $("undo").addEventListener("click", undo);
+
+  // ---------- stats ----------
+  const dlg = $("stats");
+  function openStats() {
+    const days = [];
+    for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d); }
+    const vals = days.map((d) => state.days[dayKey(d)] || 0);
+    const max = Math.max(1, ...vals);
+    const wd = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+    $("hist").innerHTML = days.map((d, i) =>
+      `<div class="col"><span class="v">${vals[i] || ""}</span><div class="bar" style="height:${(vals[i] / max) * 85}%"></div><span class="d">${i === 6 ? "hoy" : wd[d.getDay()]}</span></div>`
+    ).join("");
+    $("sTotal").textContent = total();
+    $("sToday").textContent = today();
+    $("sBest").textContent = best();
+    $("sAvg").textContent = (vals.reduce((a, b) => a + b, 0) / 7).toFixed(1);
+    const last = state.log[state.log.length - 1];
+    $("sLast").textContent = last ? new Date(last).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+    dlg.showModal();
+  }
+  $("statsBtn").addEventListener("click", openStats);
+  $("closeStats").addEventListener("click", () => dlg.close());
+  $("reset").addEventListener("click", () => {
+    if (confirm("¿Reiniciar todos los perdones? (Fede te lo va a agradecer… pidiendo perdón)")) {
+      state = blank(); save(); render(); dlg.close();
+      $("tagline").innerHTML = `Nueva pelea<small>Round 1 · Ding ding</small>`;
+    }
+  });
+
+  render();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+})();
+</script>
+</body>
+</html>
